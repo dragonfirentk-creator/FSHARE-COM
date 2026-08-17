@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<!-- Đảm bảo hiển thị đúng tỉ lệ trên điện thoại -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FairShare · Chia tiền công bằng</title>
+<!-- Nạp 2 font chữ từ Google Fonts: Space Grotesk cho tiêu đề/số liệu, Inter cho nội dung -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== BẢNG MÀU & BIẾN THIẾT KẾ (tone lạnh: mint - lavender - navy) ===== */
+  :root{
+    --bg:#EFF7F4;              /* nền tổng thể - trắng ngả mint rất nhạt */
+    --surface:#FFFFFF;         /* nền các thẻ (card) */
+    --surface-soft:#E4F3ED;    /* nền thẻ phụ, dịu hơn */
+    --mint:#7FD1B9;            /* màu chủ đạo - mint */
+    --mint-deep:#4FA98F;       /* mint đậm dùng cho nút bấm/hover */
+    --lavender:#C7CFF0;        /* màu phụ - lavender nhạt */
+    --lavender-deep:#8E9BDB;   /* lavender đậm dùng cho nhấn nhá */
+    --navy:#223138;            /* màu chữ chính, tối nhưng ngả xanh (không dùng đen thuần) */
+    --muted:#5B7069;           /* màu chữ phụ, xám-xanh */
+    --warn:#E8836F;            /* màu cảnh báo (chi vượt ngân sách) - dùng tiết chế */
+    --warn-soft:#FBE2DB;       /* nền cảnh báo nhạt */
+    --border:#D3E7E0;          /* màu viền chung */
+    --radius:16px;             /* bo góc chuẩn toàn app */
+    --shadow: 0 8px 24px -12px rgba(34,49,56,0.18); /* đổ bóng mềm */
+  }
+
+  /* Reset cơ bản để mọi trình duyệt hiển thị giống nhau */
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  /* Thiết lập nền và font chữ mặc định cho toàn trang */
+  body{
+    background:var(--bg);
+    color:var(--navy);
+    font-family:'Inter', sans-serif;
+    line-height:1.5;
+    padding-bottom:40px;
+  }
+
+  /* Container giới hạn chiều rộng nội dung, canh giữa màn hình */
+  .container{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 20px;
+  }
+
+  /* ===== HEADER / LOGO ===== */
+  header.app-header{
+    background:linear-gradient(135deg, var(--mint) 0%, var(--lavender) 100%); /* dải gradient tone lạnh làm điểm nhấn */
+    padding:24px 0; /* padding đều, không cần chừa chỗ cho nav đè lên nữa */
+    position:relative;
+  }
+  .app-header .brand{
+    display:flex;              /* xếp logo và chữ theo hàng ngang */
+    align-items:center;
+    gap:12px;
+  }
+  .app-header .logo-mark{
+    width:44px; height:44px;
+    background:var(--navy);            /* biểu tượng logo nền tối để nổi trên nền sáng */
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--mint);                 /* chữ trong logo màu mint */
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:20px;
+  }
+  .app-header h1{
+    font-family:'Space Grotesk', sans-serif; /* dùng font display cho tiêu đề */
+    font-size:26px;
+    font-weight:700;
+    color:var(--navy);
+  }
+  .app-header p.tagline{
+    margin-top:4px;
+    color:var(--navy);
+    opacity:0.75;
+    font-size:14px;
+  }
+
+  /* ===== THANH ĐIỀU HƯỚNG DẠNG TAB (nổi lên trên header nhờ margin âm) ===== */
+  nav.tabs{
+    display:flex;                 /* các nút tab nằm ngang */
+    gap:6px;
+    background:var(--surface);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:6px;
+    margin:20px auto 24px auto;   /* khoảng cách bình thường, không đè lên phần tử khác */
+    max-width:920px;
+    overflow-x:auto;              /* cho phép cuộn ngang trên màn hình nhỏ */
+    position:relative;
+    z-index:5;                    /* đảm bảo thanh tab luôn nổi trên cùng, không bị phần tử khác che mất vùng bấm */
+  }
+  nav.tabs button{
+    flex:1 1 auto;                /* các nút giãn đều chiếm không gian */
+    white-space:nowrap;
+    border:none;
+    background:transparent;
+    padding:10px 14px;
+    border-radius:12px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--muted);
+    cursor:pointer;
+    pointer-events:auto;          /* đảm bảo nút luôn nhận được sự kiện click */
+    transition:background .18s ease, color .18s ease; /* hiệu ứng chuyển màu mượt */
+  }
+  nav.tabs button.active{
+    background:var(--navy);       /* tab đang chọn nổi bật với nền tối */
+    color:#fff;
+  }
+  nav.tabs button:not(.active):hover{
+    background:var(--surface-soft); /* hover nhẹ cho tab chưa chọn */
+  }
+
+  /* ===== KHUNG NỘI DUNG CHUNG CHO TỪNG TAB ===== */
+  .panel{ display:none; }         /* mặc định ẩn hết các panel */
+  .panel.active{ display:block; } /* chỉ hiện panel đang được chọn */
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+    box-shadow:var(--shadow);
+  }
+  .card h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:17px;
+    margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card h2 .dot{ width:8px; height:8px; border-radius:50%; background:var(--mint-deep); } /* chấm nhỏ trang trí trước tiêu đề */
+
+  /* ===== FORM ===== */
+  label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:5px;
+    margin-top:12px;
+  }
+  label:first-of-type{ margin-top:0; }
+  input[type=text], input[type=number], input[type=date], select{
+    width:100%;
+    padding:10px 12px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    background:var(--bg);
+    color:var(--navy);
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  input:focus, select:focus{ border-color:var(--mint-deep); } /* viền đổi màu khi focus, hỗ trợ điều hướng bàn phím */
+
+  .row{ display:flex; gap:10px; }
+  .row > *{ flex:1; }
+
+  .chip-group{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .chip{
+    padding:8px 14px;
+    border-radius:999px;
+    border:1.5px solid var(--border);
+    background:var(--bg);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    user-select:none;
+    transition:all .15s ease;
+  }
+  .chip.selected{
+    background:var(--mint);
+    border-color:var(--mint-deep);
+    color:var(--navy);
+  }
+
+  button.btn{
+    background:var(--navy);
+    color:#fff;
+    border:none;
+    padding:11px 20px;
+    border-radius:10px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    margin-top:16px;
+    transition:transform .12s ease, background .15s ease;
+  }
+  button.btn:hover{ background:var(--mint-deep); }
+  button.btn:active{ transform:scale(0.97); } /* hiệu ứng nhấn nhẹ khi click */
+  button.btn.secondary{
+    background:transparent;
+    color:var(--navy);
+    border:1.5px solid var(--border);
+  }
+  button.btn.secondary:hover{ background:var(--surface-soft); }
+  button.btn.small{ padding:6px 12px; font-size:12.5px; margin-top:0; }
+  button.btn.danger{ background:var(--warn); }
+
+  /* ===== DANH SÁCH THÀNH VIÊN ===== */
+  .member-pill{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface-soft);
+    border-radius:999px;
+    padding:6px 10px 6px 6px;
+    margin:4px 6px 4px 0;
+    font-size:13.5px;
+    font-weight:600;
+  }
+  .avatar{
+    width:26px; height:26px; border-radius:50%;
+    background:var(--lavender-deep);
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700;
+    font-family:'Space Grotesk', sans-serif;
+  }
+  .member-pill .remove-x{ cursor:pointer; color:var(--muted); font-weight:700; padding:0 4px; }
+
+  /* ===== DANH SÁCH CHI PHÍ ===== */
+  .expense-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .expense-item:last-child{ border-bottom:none; }
+  .expense-item .meta{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .expense-item .amount{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px; }
+
+  /* ===== KHỐI SỐ DƯ / SIGNATURE ELEMENT: LUỒNG CÂN BẰNG ===== */
+  .balance-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px;
+    border-radius:10px;
+    background:var(--surface-soft);
+    margin-bottom:8px;
+  }
+  .balance-row .value.positive{ color:var(--mint-deep); font-weight:700; } /* được nhận lại tiền -> mint */
+  .balance-row .value.negative{ color:var(--warn); font-weight:700; }      /* đang nợ tiền -> cảnh báo */
+
+  .flow-item{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 14px;
+    border-radius:12px;
+    background:linear-gradient(90deg, var(--surface-soft), var(--surface));
+    margin-bottom:10px;
+    position:relative;
+    overflow:hidden;
+  }
+  .flow-item .flow-track{
+    position:absolute; left:0; bottom:0; height:3px;
+    background:repeating-linear-gradient(90deg, var(--mint-deep) 0 8px, transparent 8px 14px); /* đường nét đứt mô phỏng "dòng chảy" tiền */
+    width:100%;
+    animation:flowmove 1.2s linear infinite; /* hiệu ứng chuyển động nhẹ, thể hiện tiền đang "chảy" */
+  }
+  @keyframes flowmove{ from{ background-position-x:0; } to{ background-position-x:22px; } }
+  .flow-item b{ font-family:'Space Grotesk', sans-serif; }
+  .flow-arrow{ color:var(--muted); font-size:18px; }
+
+  /* ===== TAB THỐNG KÊ ===== */
+  .stat-bar-wrap{ margin-bottom:14px; }
+  .stat-bar-label{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px; font-weight:600; }
+  .stat-bar-bg{ height:10px; background:var(--surface-soft); border-radius:999px; overflow:hidden; }
+  .stat-bar-fill{ height:100%; background:var(--mint-deep); border-radius:999px; transition:width .4s ease; }
+  .stat-bar-fill.over{ background:var(--warn); } /* đổi màu đỏ-cam nếu vượt ngân sách */
+
+  .alert-banner{
+    background:var(--warn-soft);
+    border:1px solid var(--warn);
+    color:#8a3f2e;
+    padding:12px 14px;
+    border-radius:12px;
+    font-size:13.5px;
+    margin-bottom:14px;
+    display:flex; gap:10px; align-items:flex-start;
+  }
+
+  /* ===== TAB CHATBOT ===== */
+  #chatWindow{
+    height:360px;
+    overflow-y:auto;
+    display:flex; flex-direction:column; gap:10px;
+    padding:6px 2px;
+    margin-bottom:12px;
+  }
+  .msg{ max-width:80%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.45; white-space:pre-wrap; }
+  .msg.bot{ background:var(--surface-soft); align-self:flex-start; border-bottom-left-radius:4px; }
+  .msg.user{ background:var(--navy); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+  .msg.typing{ color:var(--muted); font-style:italic; }
+  .chat-input-row{ display:flex; gap:8px; }
+  .chat-input-row input{ flex:1; }
+  .suggest-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .suggest-chip{
+    font-size:12.5px; padding:7px 12px; border-radius:999px;
+    background:var(--surface-soft); border:1px solid var(--border);
+    cursor:pointer; font-weight:600;
+  }
+  .suggest-chip:hover{ background:var(--lavender); }
+
+  .empty-state{ text-align:center; color:var(--muted); font-size:13.5px; padding:20px 0; }
+
+  .tab-icon{ font-size:15px; margin-right:5px; } /* icon nhỏ trước tên tab, giúp nhận diện nhanh trên di động */
+
+  /* ===== RESPONSIVE CHO ĐIỆN THOẠI ===== */
+  @media (max-width:560px){
+    .row{ flex-direction:column; gap:0; } /* các hàng input xếp dọc thay vì ngang cho dễ bấm */
+
+    body{ padding-bottom:82px; } /* chừa chỗ phía dưới để thanh tab cố định không che nội dung */
+
+    /* Biến thanh tab từ nằm giữa trang thành thanh điều hướng CỐ ĐỊNH Ở ĐÁY MÀN HÌNH, giống app di động thật */
+    nav.tabs{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      margin:0;
+      max-width:none;
+      border-radius:0;
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom)); /* env(safe-area-inset-bottom): chừa thêm khoảng trống cho thanh cử chỉ của iPhone */
+      box-shadow:0 -6px 20px -10px rgba(34,49,56,0.25);
+      z-index:20;
+    }
+    nav.tabs button{
+      flex-direction:column;  /* icon nằm trên, chữ nằm dưới cho gọn */
+      gap:2px;
+      padding:6px 2px;
+      font-size:10.5px;
+    }
+    .tab-icon{ font-size:19px; margin-right:0; }
+
+    /* Cỡ chữ input tối thiểu 16px để trình duyệt Safari trên iPhone không tự động phóng to màn hình khi bấm vào ô nhập */
+    input[type=text], input[type=number], input[type=date], select{ font-size:16px; }
+
+    #tripSwitcher{ flex-direction:column; align-items:stretch; } /* bộ chọn chuyến đi xếp dọc cho vừa màn hình hẹp */
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== PHẦN HEADER: LOGO + TÊN APP ===== -->
+<header class="app-header">
+  <div class="container">
+    <div class="brand">
+      <div class="logo-mark"><img src="data:image/jpeg;base64,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" alt="Logo FairShare" style="width:100%; height:100%; object-fit:cover; border-radius:12px; display:block;"></div> <!-- Logo được nhúng trực tiếp dạng base64 nên luôn hiển thị đúng dù mở file ở đâu, không cần kèm file ảnh riêng -->
+      <div>
+        <h1>FairShare</h1>
+        <p class="tagline">Chia tiền chuyến đi công bằng, không mất công tính toán</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ===== MÀN HÌNH ĐĂNG NHẬP / TẠO TÀI KHOẢN ===== -->
+  <div id="authScreen">
+    <div class="card" style="max-width:380px; margin:32px auto;">
+      <h2><span class="dot"></span>Đăng nhập FairShare</h2>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:4px;">
+        Dùng chung 1 tên đăng nhập cho cả nhóm để mọi người cùng thấy chuyến đi, hoặc mỗi người tự tạo tài khoản riêng.
+      </p>
+      <label for="authUsername">Tên đăng nhập</label>
+      <input type="text" id="authUsername" placeholder="Ví dụ: nhomdalat2026">
+      <label for="authPasscode">Mật mã</label>
+      <input type="text" id="authPasscode" placeholder="Đặt một mật mã dễ nhớ" onkeydown="if(event.key==='Enter') doLogin();">
+      <div id="authError" style="color:var(--warn); font-size:12.5px; margin-top:8px;"></div>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn" style="margin-top:0;" onclick="doLogin()">Đăng nhập</button>
+        <button class="btn secondary" style="margin-top:0;" onclick="doRegister()">Tạo tài khoản mới</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOÀN BỘ ỨNG DỤNG: chỉ hiện ra sau khi đăng nhập thành công ===== -->
+  <div id="appMain" style="display:none;">
+
+  <!-- Thanh tài khoản: tên đang đăng nhập + nút đăng xuất -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-size:13px; color:var(--muted);">
+    <span>Đang đăng nhập: <b id="currentUserLabel" style="color:var(--navy);"></b></span>
+    <span style="cursor:pointer; font-weight:600; color:var(--navy); padding:4px 8px;" onclick="logout()">Đăng xuất ⏻</span>
+  </div>
+
+  <!-- ===== BỘ CHỌN CHUYẾN ĐI: chuyển qua lại giữa nhiều chuyến đi, tạo mới hoặc xoá ===== -->
+  <div class="card" id="tripSwitcher" style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin-top:20px;">
+    <div style="flex:1; min-width:180px;">
+      <label for="tripSelect" style="margin-top:0;">Đang xem chuyến đi</label>
+      <select id="tripSelect" onchange="switchTrip(this.value)"></select>
+    </div>
+    <button class="btn secondary small" style="margin-top:0;" onclick="createTrip()">+ Chuyến đi mới</button>
+    <button class="btn danger small" style="margin-top:0;" onclick="deleteCurrentTrip()">Xoá chuyến đi này</button>
+  </div>
+
+  <!-- ===== THANH TAB ĐIỀU HƯỚNG ===== -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="group"><span class="tab-icon">👥</span>Nhóm</button>
+    <button class="tab-btn" data-tab="expense"><span class="tab-icon">💰</span>Ghi chi phí</button>
+    <button class="tab-btn" data-tab="balance"><span class="tab-icon">⚖️</span>Cân bằng</button>
+    <button class="tab-btn" data-tab="stats"><span class="tab-icon">📊</span>Thống kê</button>
+    <button class="tab-btn" data-tab="chat"><span class="tab-icon">🤖</span>Trợ lý AI</button>
+  </nav>
+
+  <!-- ===== TAB 1: QUẢN LÝ NHÓM & THÀNH VIÊN ===== -->
+  <section class="panel active" id="panel-group">
+    <div class="card">
+      <h2><span class="dot"></span>Chuyến đi hiện tại</h2>
+      <label for="tripName">Tên chuyến đi</label>
+      <input type="text" id="tripName" placeholder="Ví dụ: Đà Lạt 3 ngày 2 đêm" oninput="renameCurrentTrip(this.value)" onblur="saveState()">
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Thành viên</h2>
+      <label for="memberInput">Thêm thành viên vào nhóm</label>
+      <div class="row">
+        <input type="text" id="memberInput" placeholder="Nhập tên rồi bấm Thêm">
+        <button class="btn" style="max-width:110px" onclick="addMember()">Thêm</button>
+      </div>
+      <div id="memberList" style="margin-top:16px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== TAB 2: GHI NHẬN CHI PHÍ ===== -->
+  <section class="panel" id="panel-expense">
+    <div class="card">
+      <h2><span class="dot"></span>Thêm khoản chi mới</h2>
+      <label for="expDesc">Nội dung</label>
+      <input type="text" id="expDesc" placeholder="Ví dụ: Ăn tối, xăng xe, vé tham quan...">
+
+      <div class="row">
+        <div>
+          <label for="expAmount">Số tiền (đ)</label>
+          <input type="number" id="expAmount" placeholder="0">
+        </div>
+        <div>
+          <label for="expDate">Ngày chi</label>
+          <input type="date" id="expDate">
+        </div>
+      </div>
+
+      <label for="expPayer">Ai đã trả tiền?</label>
+      <select id="expPayer"></select>
+
+      <label>Chia đều cho những ai? (bấm chọn)</label>
+      <div class="chip-group" id="splitChips"></div>
+
+      <button class="btn" onclick="addExpense()">Lưu khoản chi</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Lịch sử chi tiêu</h2>
+      <div id="expenseList"><p class="empty-state">Chưa có khoản chi nào được ghi lại.</p></div>
+    </div>
+  </section>
+
+  <!-- ===== TAB 3: CÂN BẰNG & GỢI Ý THANH TOÁN ===== -->
+  <section class="panel" id="panel-balance">
+    <div class="card">
+      <h2><span class="dot"></span>Số dư từng người</h2>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;">Số dương = được nhận lại · Số âm = đang nợ nhóm</p>
+      <div id="balanceList"><p class="empty-state">Chưa có dữ liệu để tính cân bằng.</p></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Gợi ý thanh toán tối ưu</h2>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;">FairShare tự động tính số lượt chuyển khoản ít nhất để mọi người huề tiền nhau.</p>
+      <div id="settleList"><p class="empty-state">Chưa có khoản chi nào để gợi ý.</p></div>
+    </div>
+  </section>
+
+  <!-- ===== TAB 4: THỐNG KÊ & CẢNH BÁO NGÂN SÁCH ===== -->
+  <section class="panel" id="panel-stats">
+    <div class="card">
+      <h2><span class="dot"></span>Ngân sách cá nhân / tuần</h2>
+      <div class="row">
+        <div>
+          <label for="budgetInput">Đặt hạn mức mỗi người (đ/tuần)</label>
+          <input type="number" id="budgetInput" placeholder="Ví dụ: 500000">
+        </div>
+      </div>
+      <button class="btn secondary" onclick="renderStats()">Cập nhật thống kê</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Chi tiêu theo từng người (7 ngày gần nhất)</h2>
+      <div id="statsAlerts"></div>
+      <div id="statsBars"><p class="empty-state">Chưa có dữ liệu.</p></div>
+    </div>
+  </section>
+
+  <!-- ===== TAB 5: CHATBOT TRỢ LÝ AI ===== -->
+  <section class="panel" id="panel-chat">
+    <div class="card">
+      <h2><span class="dot"></span>Trợ lý FairShare</h2>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;">
+        Hỏi về ý tưởng đi chơi, xin nhận xét về chi tiêu, hoặc nhờ cảnh báo khi có người tiêu vượt mức.
+      </p>
+
+      <div class="suggest-row">
+        <div class="suggest-chip" onclick="sendQuickMessage('Gợi ý cho tụi mình 3 ý tưởng đi chơi cuối tuần với ngân sách vừa phải')">💡 Gợi ý đi chơi</div>
+        <div class="suggest-chip" onclick="sendQuickMessage('Tuần này ai trong nhóm đang chi tiêu nhiều bất thường?')">📊 Kiểm tra chi tiêu</div>
+        <div class="suggest-chip" onclick="sendQuickMessage('Nhóm mình nên chia tiền chuyến đi này thế nào cho công bằng nhất?')">⚖️ Cách chia công bằng</div>
+      </div>
+
+      <div id="chatWindow"></div>
+
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Nhập câu hỏi của bạn..." onkeydown="if(event.key==='Enter') sendChat();">
+        <button class="btn small" style="margin-top:0;" onclick="sendChat()">Gửi</button>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- đóng #appMain -->
+
+</div>
+
+<script>
+  /* ==============================================================
+     PHẦN TRẠNG THÁI DỮ LIỆU (STATE)
+     Hỗ trợ NHIỀU chuyến đi: mỗi chuyến đi có thành viên, khoản chi,
+     ngân sách và lịch sử chat RIÊNG BIỆT, không lẫn vào nhau.
+     ============================================================== */
+  const state = {
+    trips: [],          // danh sách tất cả chuyến đi: [{id, name, members, expenses, budget, chatHistory}]
+    currentTripId: null, // id của chuyến đi đang được chọn để xem/chỉnh sửa
+    currentUser: null   // tên tài khoản đang đăng nhập, null nếu chưa đăng nhập
+  };
+
+  // Biến tạm lưu mã băm của mật mã tài khoản đang đăng nhập, dùng lại mỗi khi lưu dữ liệu
+  // (không lưu mật mã dạng chữ thô, chỉ lưu bản băm - xem hàm simpleHash bên dưới)
+  let currentPasscodeHash = null;
+
+  // Hàm lấy object chuyến đi đang được chọn hiện tại (trả về null nếu chưa có chuyến nào)
+  function getCurrentTrip(){
+    return state.trips.find(t => t.id === state.currentTripId) || null;
+  }
+
+  // Hàm tạo id duy nhất cho chuyến đi mới
+  function makeTripId(){
+    return 'trip_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  }
+
+  // Hàm tạo một chuyến đi mới, hỏi tên qua hộp thoại rồi chuyển sang chuyến đó luôn
+  function createTrip(){
+    const name = prompt('Đặt tên cho chuyến đi mới:', 'Chuyến đi mới');
+    if(name === null) return; // người dùng bấm Huỷ thì không làm gì cả
+    const trip = {
+      id: makeTripId(),
+      name: name.trim() || 'Chuyến đi mới',
+      members: [],
+      expenses: [],
+      budget: 0,
+      chatHistory: []
+    };
+    state.trips.push(trip);
+    state.currentTripId = trip.id;
+    saveState();
+    renderTripSelect();
+    loadCurrentTripIntoUI();
+  }
+
+  // Hàm chuyển sang xem/chỉnh sửa một chuyến đi khác theo id
+  function switchTrip(id){
+    state.currentTripId = id;
+    saveState();
+    loadCurrentTripIntoUI();
+  }
+
+  // Hàm xoá hẳn chuyến đi đang chọn (kèm toàn bộ thành viên, khoản chi của chuyến đó)
+  function deleteCurrentTrip(){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    if(!confirm(`Xoá toàn bộ chuyến đi "${trip.name}"? Mọi thành viên và khoản chi trong chuyến này sẽ mất, không thể hoàn tác.`)) return;
+    state.trips = state.trips.filter(t => t.id !== trip.id);
+    if(state.trips.length === 0){
+      // Không để app trống hoàn toàn, tự tạo lại 1 chuyến mặc định
+      state.trips.push({ id: makeTripId(), name: 'Chuyến đi của tôi', members: [], expenses: [], budget: 0, chatHistory: [] });
+    }
+    state.currentTripId = state.trips[0].id;
+    saveState();
+    renderTripSelect();
+    loadCurrentTripIntoUI();
+  }
+
+  // Hàm đổi tên chuyến đi đang chọn (gọi khi người dùng gõ vào ô "Tên chuyến đi")
+  function renameCurrentTrip(newName){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    trip.name = newName;
+    renderTripSelect(); // cập nhật lại tên hiển thị trong dropdown chọn chuyến đi
+  }
+
+  // Hàm vẽ lại dropdown chọn chuyến đi ở đầu trang
+  function renderTripSelect(){
+    const sel = document.getElementById('tripSelect');
+    if(!sel) return;
+    sel.innerHTML = state.trips.map(t =>
+      `<option value="${escapeHtml(t.id)}" ${t.id === state.currentTripId ? 'selected' : ''}>${escapeHtml(t.name)}</option>`
+    ).join('');
+  }
+
+  // Hàm nạp toàn bộ giao diện theo dữ liệu của chuyến đi đang chọn (gọi khi tạo/chuyển/xoá chuyến đi)
+  function loadCurrentTripIntoUI(){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+
+    document.getElementById('tripName').value = trip.name || '';
+    document.getElementById('budgetInput').value = trip.budget || '';
+
+    renderMembers();
+    renderPayerSelect();
+    renderSplitChips();
+    renderExpenseList();
+
+    // Nếu 2 tab Cân bằng / Thống kê đang mở thì tính lại luôn cho khớp chuyến đi mới chọn
+    if(document.getElementById('panel-balance').classList.contains('active')) renderBalance();
+    if(document.getElementById('panel-stats').classList.contains('active')) renderStats();
+
+    // Vẽ lại khung chat theo lịch sử riêng của chuyến đi này
+    const chatWin = document.getElementById('chatWindow');
+    chatWin.innerHTML = '';
+    if(trip.chatHistory.length > 0){
+      trip.chatHistory.forEach(m => appendMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
+    } else {
+      appendMessage('Chào bạn! Mình là trợ lý FairShare 👋 Mình có thể gợi ý chỗ đi chơi, phân tích chi tiêu của nhóm "' + trip.name + '", hoặc cảnh báo nếu ai đó tiêu hơi tay. Bạn cần giúp gì nào?', 'bot');
+    }
+  }
+
+  /* ==============================================================
+     PHẦN 0: TÀI KHOẢN & LƯU TRỮ DỮ LIỆU BỀN VỮNG
+     Dữ liệu được lưu theo TÀI KHOẢN (không phải theo trình duyệt),
+     dùng window.storage với shared=true để dù đăng nhập ở máy nào,
+     điện thoại nào, cùng tên đăng nhập + mật mã vẫn thấy đúng dữ
+     liệu chuyến đi cũ - không bị lẫn lộn giữa các lượt dùng khác nhau.
+     Lưu ý: đây là xác thực đơn giản cho đồ án học sinh, không phải
+     hệ thống bảo mật thật (không mã hoá đầu-cuối, không có backend
+     kiểm soát truy cập theo từng khoá) - đủ dùng để demo, không nên
+     dùng để lưu thông tin nhạy cảm thật.
+
+     LỚP BỌC LƯU TRỮ (storageGet/storageSet):
+     window.storage chỉ hoạt động khi xem file trong khung xem trước
+     của Claude. Nếu em tải file .html này về máy rồi mở trực tiếp
+     bằng trình duyệt (hoặc đem host lên một website khác), window.storage
+     sẽ không tồn tại. Vì vậy 2 hàm dưới đây sẽ tự kiểm tra: nếu có
+     window.storage thì dùng nó (đồng bộ được nhiều thiết bị); nếu
+     không có thì tự chuyển sang dùng localStorage của chính trình
+     duyệt (chỉ lưu được trên máy/trình duyệt đang mở, nhưng vẫn đủ
+     để đăng xuất - đăng nhập lại không mất dữ liệu như em cần).
+     ============================================================== */
+
+  // Hàm lấy dữ liệu đã lưu theo khoá, tự chọn đúng nơi lưu trữ đang khả dụng
+  async function storageGet(key){
+    if(typeof window.storage !== 'undefined'){
+      // Đang chạy trong khung xem trước của Claude -> dùng storage đồng bộ nhiều thiết bị
+      try{
+        return await window.storage.get(key, true);
+      }catch(err){
+        return null; // key chưa tồn tại hoặc lỗi -> coi như chưa có dữ liệu
+      }
+    }
+    // Đang chạy như file độc lập (mở trực tiếp / đã deploy web khác) -> dùng bộ nhớ trình duyệt
+    const raw = localStorage.getItem(key);
+    return raw ? { value: raw } : null;
+  }
+
+  // Hàm lưu dữ liệu theo khoá, tự chọn đúng nơi lưu trữ đang khả dụng
+  async function storageSet(key, value){
+    if(typeof window.storage !== 'undefined'){
+      try{
+        await window.storage.set(key, value, true);
+        return true;
+      }catch(err){
+        console.error('Không lưu được vào window.storage:', err);
+        return false;
+      }
+    }
+    try{
+      localStorage.setItem(key, value);
+      return true;
+    }catch(err){
+      console.error('Không lưu được vào localStorage:', err);
+      return false;
+    }
+  }
+
+  // Hàm băm mật mã đơn giản (không phải mã hoá bảo mật thật, chỉ để tránh lưu chữ thô)
+  function simpleHash(str){
+    let hash = 0;
+    for(let i = 0; i < str.length; i++){
+      hash = (hash * 31 + str.charCodeAt(i)) >>> 0; // >>>0 để giữ số nguyên dương 32-bit
+    }
+    return hash.toString(16); // trả về dạng chuỗi hex ngắn gọn
+  }
+
+  // Hàm làm sạch tên đăng nhập: khoá lưu trữ không được chứa khoảng trắng,
+  // dấu gạch chéo (/ \) hay dấu ngoặc kép (' ") - nếu còn sót lại các ký tự
+  // này, hệ thống lưu trữ sẽ báo lỗi "Internal server error" như em vừa gặp.
+  function sanitizeUsername(username){
+    return username
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')     // đổi mọi khoảng trắng thành dấu gạch dưới
+      .replace(/["'\\/]/g, ''); // xoá bỏ dấu ngoặc kép, backslash, slash nếu có
+  }
+
+  // Hàm tạo khoá lưu trữ duy nhất cho từng tài khoản dựa trên tên đăng nhập
+  function accountKey(username){
+    return 'account:' + sanitizeUsername(username); // chuẩn hoá chữ thường + loại ký tự không hợp lệ để tránh trùng tài khoản hoặc lỗi lưu trữ
+  }
+
+  // Lưu toàn bộ danh sách chuyến đi hiện tại xuống tài khoản đang đăng nhập (gọi sau mỗi lần thay đổi dữ liệu)
+  async function saveState(){
+    if(!state.currentUser) return; // chưa đăng nhập thì không có tài khoản nào để lưu vào
+    const key = accountKey(state.currentUser);
+    await storageSet(key, JSON.stringify({ passcodeHash: currentPasscodeHash, trips: state.trips }));
+  }
+
+  // Hàm xử lý khi người dùng bấm "Tạo tài khoản mới"
+  async function doRegister(){
+    const errEl = document.getElementById('authError');
+    errEl.textContent = '';
+    const username = document.getElementById('authUsername').value.trim();
+    const passcode = document.getElementById('authPasscode').value;
+    if(!username || !passcode){ errEl.textContent = 'Vui lòng nhập đầy đủ tên đăng nhập và mật mã.'; return; }
+    if(sanitizeUsername(username).length === 0){ errEl.textContent = 'Tên đăng nhập không hợp lệ, vui lòng dùng chữ hoặc số.'; return; }
+
+    const key = accountKey(username);
+    const existing = await storageGet(key);
+    if(existing && existing.value){ errEl.textContent = 'Tên đăng nhập này đã có người dùng rồi. Hãy chọn tên khác hoặc bấm Đăng nhập.'; return; }
+
+    currentPasscodeHash = simpleHash(passcode);
+    const defaultTrip = { id: makeTripId(), name: 'Chuyến đi của tôi', members: [], expenses: [], budget: 0, chatHistory: [] };
+    state.trips = [defaultTrip];
+    state.currentTripId = defaultTrip.id;
+    state.currentUser = username;
+
+    const ok = await storageSet(key, JSON.stringify({ passcodeHash: currentPasscodeHash, trips: state.trips }));
+    if(!ok){ errEl.textContent = 'Có lỗi khi lưu tài khoản, vui lòng thử lại.'; return; }
+    enterApp();
+  }
+
+  // Hàm xử lý khi người dùng bấm "Đăng nhập"
+  async function doLogin(){
+    const errEl = document.getElementById('authError');
+    errEl.textContent = '';
+    const username = document.getElementById('authUsername').value.trim();
+    const passcode = document.getElementById('authPasscode').value;
+    if(!username || !passcode){ errEl.textContent = 'Vui lòng nhập đầy đủ tên đăng nhập và mật mã.'; return; }
+
+    const key = accountKey(username);
+    const result = await storageGet(key);
+    if(!result || !result.value){ errEl.textContent = 'Chưa có tài khoản này. Bấm "Tạo tài khoản mới" để tạo nhé.'; return; }
+
+    let account;
+    try{ account = JSON.parse(result.value); }
+    catch(err){ errEl.textContent = 'Dữ liệu tài khoản bị lỗi, vui lòng tạo tài khoản mới.'; return; }
+
+    if(account.passcodeHash !== simpleHash(passcode)){ errEl.textContent = 'Sai mật mã, vui lòng thử lại.'; return; }
+
+    currentPasscodeHash = account.passcodeHash;
+    state.currentUser = username;
+    // Nạp lại đúng danh sách chuyến đi đã lưu trước đó của tài khoản này
+    state.trips = (account.trips && account.trips.length > 0) ? account.trips : [{ id: makeTripId(), name: 'Chuyến đi của tôi', members: [], expenses: [], budget: 0, chatHistory: [] }];
+    state.currentTripId = state.trips.some(t => t.id === state.currentTripId) ? state.currentTripId : state.trips[0].id;
+
+    enterApp();
+  }
+
+  // Hàm hiển thị màn hình chính sau khi đăng nhập/đăng ký thành công
+  function enterApp(){
+    document.getElementById('authScreen').style.display = 'none'; // ẩn màn hình đăng nhập
+    document.getElementById('appMain').style.display = 'block';   // hiện toàn bộ ứng dụng
+    document.getElementById('currentUserLabel').textContent = state.currentUser; // hiển thị tên tài khoản đang dùng
+    document.getElementById('authUsername').value = '';
+    document.getElementById('authPasscode').value = '';
+    document.getElementById('authError').textContent = '';
+    renderTripSelect();       // vẽ danh sách chuyến đi của tài khoản này
+    loadCurrentTripIntoUI();  // nạp dữ liệu chuyến đi đang chọn lên toàn bộ giao diện
+  }
+
+  // Hàm xử lý khi người dùng bấm "Đăng xuất"
+  function logout(){
+    state.currentUser = null;
+    state.trips = [];
+    state.currentTripId = null;
+    currentPasscodeHash = null;
+    document.getElementById('appMain').style.display = 'none'; // ẩn ứng dụng
+    document.getElementById('authScreen').style.display = 'block'; // hiện lại màn hình đăng nhập
+    // Lưu ý: dữ liệu KHÔNG bị xoá khỏi storage khi đăng xuất, lần sau đăng nhập lại
+    // bằng đúng tên + mật mã này sẽ thấy lại đầy đủ các chuyến đi cũ.
+  }
+
+  // Hàm chuyển ký tự đặc biệt trong chuỗi thành thực thể HTML an toàn,
+  // chống lỗi XSS khi chèn tên/nội dung do người dùng nhập vào innerHTML
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[c]));
+  }
+
+  /* ==============================================================
+     PHẦN 1: CHUYỂN TAB
+     ============================================================== */
+  // Lấy toàn bộ nút tab trên thanh điều hướng
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    // Gắn sự kiện click cho từng nút tab
+    btn.addEventListener('click', ()=>{
+      // Bỏ trạng thái active của mọi nút tab
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      // Bỏ trạng thái active của mọi panel nội dung
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      // Gắn active cho nút vừa bấm
+      btn.classList.add('active');
+      // Hiện panel tương ứng dựa vào thuộc tính data-tab
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      // Nếu chuyển sang tab cân bằng thì tính toán lại số liệu mới nhất
+      if(btn.dataset.tab === 'balance') renderBalance();
+      // Nếu chuyển sang tab thống kê thì vẽ lại biểu đồ mới nhất
+      if(btn.dataset.tab === 'stats') renderStats();
+    });
+  });
+
+  /* ==============================================================
+     PHẦN 2: QUẢN LÝ THÀNH VIÊN
+     ============================================================== */
+  // Hàm tạo chữ cái đầu để hiển thị trong avatar tròn
+  function getInitial(name){
+    return name.trim().charAt(0).toUpperCase(); // lấy ký tự đầu tiên, viết hoa
+  }
+
+  // Hàm thêm một thành viên mới vào nhóm
+  function addMember(){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    const input = document.getElementById('memberInput'); // lấy ô nhập tên
+    const name = input.value.trim(); // cắt khoảng trắng thừa
+    if(!name) return; // nếu rỗng thì không làm gì cả
+    if(trip.members.includes(name)){ alert('Thành viên này đã có trong nhóm rồi!'); return; } // tránh trùng tên
+    trip.members.push(name); // thêm tên vào mảng thành viên của chuyến đi hiện tại
+    input.value = ''; // xoá trắng ô nhập sau khi thêm
+    renderMembers(); // vẽ lại danh sách thành viên
+    renderPayerSelect(); // cập nhật lại dropdown "ai trả tiền"
+    renderSplitChips(); // cập nhật lại các nút chọn "chia cho ai"
+    saveState(); // lưu lại dữ liệu
+  }
+
+  // Hàm xoá một thành viên khỏi nhóm
+  function removeMember(name){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    // Hỏi xác nhận trước khi xoá để tránh bấm nhầm mất dữ liệu
+    if(!confirm(`Xoá "${name}" khỏi nhóm? Các khoản chi đã ghi liên quan đến người này sẽ không tự động cập nhật.`)) return;
+    trip.members = trip.members.filter(m => m !== name); // giữ lại những người khác tên cần xoá
+    renderMembers(); renderPayerSelect(); renderSplitChips(); // vẽ lại toàn bộ giao diện liên quan
+    saveState(); // lưu lại dữ liệu
+  }
+
+  // Hàm vẽ lại danh sách các thẻ (pill) thành viên
+  function renderMembers(){
+    const trip = getCurrentTrip();
+    const wrap = document.getElementById('memberList'); // khung chứa danh sách
+    if(!trip || trip.members.length === 0){ // nếu chưa có ai trong nhóm
+      wrap.innerHTML = '<p class="empty-state">Chưa có thành viên nào. Hãy thêm ít nhất 2 người để bắt đầu chia tiền.</p>';
+      return;
+    }
+    // Dùng map để tạo HTML cho từng thành viên rồi nối lại thành 1 chuỗi
+    // escapeHtml() để tránh lỗi XSS nếu ai đó đặt tên chứa thẻ HTML/script
+    wrap.innerHTML = trip.members.map(name => `
+      <span class="member-pill">
+        <span class="avatar">${escapeHtml(getInitial(name))}</span>
+        ${escapeHtml(name)}
+        <span class="remove-x" onclick="removeMember('${escapeHtml(name)}')">✕</span>
+      </span>
+    `).join('');
+  }
+
+  /* ==============================================================
+     PHẦN 3: GHI NHẬN CHI PHÍ
+     ============================================================== */
+  // Hàm cập nhật dropdown chọn người trả tiền dựa theo danh sách thành viên hiện tại
+  function renderPayerSelect(){
+    const trip = getCurrentTrip();
+    const sel = document.getElementById('expPayer'); // lấy thẻ select
+    sel.innerHTML = (trip ? trip.members : []).map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join(''); // đổ danh sách option
+  }
+
+  // Biến tạm lưu những thành viên đang được chọn để chia tiền cho khoản chi mới
+  let selectedSplit = [];
+
+  // Hàm vẽ các nút chip để chọn ai được chia khoản chi này
+  function renderSplitChips(){
+    const trip = getCurrentTrip();
+    const wrap = document.getElementById('splitChips'); // khung chứa các chip
+    selectedSplit = trip ? [...trip.members] : []; // mặc định chọn hết tất cả thành viên (chia đều cho cả nhóm)
+    wrap.innerHTML = (trip ? trip.members : []).map(m => `
+      <span class="chip selected" data-name="${escapeHtml(m)}" onclick="toggleChip(this,'${escapeHtml(m)}')">${escapeHtml(m)}</span>
+    `).join('');
+  }
+
+  // Hàm bật/tắt trạng thái chọn của 1 chip thành viên
+  function toggleChip(el, name){
+    el.classList.toggle('selected'); // đổi giao diện chip (chọn / bỏ chọn)
+    if(selectedSplit.includes(name)){
+      selectedSplit = selectedSplit.filter(n => n !== name); // nếu đang chọn thì bỏ ra khỏi danh sách
+    } else {
+      selectedSplit.push(name); // nếu chưa chọn thì thêm vào danh sách
+    }
+  }
+
+  // Hàm định dạng số tiền theo chuẩn Việt Nam (dấu chấm ngăn cách hàng nghìn)
+  function formatVND(num){
+    return Math.round(num).toLocaleString('vi-VN') + 'đ'; // ví dụ: 150000 -> "150.000đ"
+  }
+
+  // Hàm thêm 1 khoản chi mới vào danh sách
+  function addExpense(){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    const desc = document.getElementById('expDesc').value.trim(); // nội dung khoản chi
+    const amount = parseFloat(document.getElementById('expAmount').value); // số tiền, ép kiểu về số thực
+    const date = document.getElementById('expDate').value || new Date().toISOString().slice(0,10); // nếu không chọn ngày thì lấy hôm nay
+    const payer = document.getElementById('expPayer').value; // người đã trả tiền
+
+    // Kiểm tra dữ liệu hợp lệ trước khi lưu
+    if(!desc || !amount || amount <= 0){ alert('Vui lòng nhập đầy đủ nội dung và số tiền hợp lệ.'); return; }
+    if(!payer){ alert('Vui lòng thêm thành viên trước khi ghi chi phí.'); return; }
+    if(selectedSplit.length === 0){ alert('Vui lòng chọn ít nhất 1 người để chia khoản chi này.'); return; }
+
+    // Tạo object khoản chi và thêm vào mảng expenses của chuyến đi hiện tại
+    trip.expenses.push({
+      id: Date.now(),        // dùng thời gian hiện tại làm mã định danh duy nhất
+      desc, amount, date, payer,
+      splitWith: [...selectedSplit] // sao chép mảng để tránh bị tham chiếu chung
+    });
+
+    // Xoá trắng form sau khi lưu thành công
+    document.getElementById('expDesc').value = '';
+    document.getElementById('expAmount').value = '';
+
+    renderExpenseList(); // vẽ lại danh sách lịch sử chi tiêu
+    saveState(); // lưu lại dữ liệu
+  }
+
+  // Hàm xoá 1 khoản chi theo id
+  function removeExpense(id){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    // Hỏi xác nhận trước khi xoá để tránh bấm nhầm mất dữ liệu
+    if(!confirm('Xoá khoản chi này? Không thể hoàn tác.')) return;
+    trip.expenses = trip.expenses.filter(e => e.id !== id); // giữ lại các khoản chi khác id cần xoá
+    renderExpenseList();
+    saveState(); // lưu lại dữ liệu
+  }
+
+  // Hàm vẽ lại danh sách lịch sử chi tiêu
+  function renderExpenseList(){
+    const trip = getCurrentTrip();
+    const wrap = document.getElementById('expenseList');
+    if(!trip || trip.expenses.length === 0){
+      wrap.innerHTML = '<p class="empty-state">Chưa có khoản chi nào được ghi lại.</p>';
+      return;
+    }
+    // Sắp xếp khoản chi mới nhất lên đầu danh sách
+    const sorted = [...trip.expenses].sort((a,b)=> b.id - a.id);
+    // escapeHtml() cho các trường do người dùng nhập (nội dung, tên người trả) để chống XSS
+    wrap.innerHTML = sorted.map(e => `
+      <div class="expense-item">
+        <div>
+          <div><b>${escapeHtml(e.desc)}</b></div>
+          <div class="meta">${escapeHtml(e.payer)} đã trả · chia cho ${e.splitWith.length} người · ${escapeHtml(e.date)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="amount">${formatVND(e.amount)}</div>
+          <span style="font-size:11px;color:var(--muted);cursor:pointer;" onclick="removeExpense(${e.id})">Xoá</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ==============================================================
+     PHẦN 4: TÍNH TOÁN CÂN BẰNG & TỐI ƯU THANH TOÁN
+     ============================================================== */
+  // Hàm tính số dư (net balance) của từng thành viên: dương = được nhận, âm = phải trả
+  function calculateBalances(){
+    const trip = getCurrentTrip();
+    const balance = {}; // đối tượng lưu số dư, key là tên, value là số tiền
+    if(!trip) return balance;
+    trip.members.forEach(m => balance[m] = 0); // khởi tạo tất cả thành viên có số dư = 0
+
+    trip.expenses.forEach(e => { // duyệt qua từng khoản chi
+      const share = e.amount / e.splitWith.length; // chia đều số tiền cho những người tham gia khoản đó
+      balance[e.payer] = (balance[e.payer] || 0) + e.amount; // người trả tiền được cộng toàn bộ số tiền đã ứng ra
+      e.splitWith.forEach(person => { // với mỗi người phải chịu phần chi phí này
+        balance[person] = (balance[person] || 0) - share; // trừ đi phần họ phải gánh
+      });
+    });
+    return balance; // trả về object số dư từng người
+  }
+
+  // Hàm vẽ danh sách số dư từng thành viên
+  function renderBalance(){
+    const balance = calculateBalances(); // lấy số dư mới nhất
+    const wrap = document.getElementById('balanceList');
+    const names = Object.keys(balance);
+    if(names.length === 0){ wrap.innerHTML = '<p class="empty-state">Chưa có dữ liệu để tính cân bằng.</p>'; }
+    else {
+      wrap.innerHTML = names.map(name => {
+        const val = balance[name];
+        const cls = val >= 0 ? 'positive' : 'negative'; // chọn màu theo dấu số dư
+        const label = val >= 0 ? 'sẽ được nhận' : 'cần trả thêm';
+        return `<div class="balance-row"><span>${escapeHtml(name)}</span><span class="value ${cls}">${label} ${formatVND(Math.abs(val))}</span></div>`;
+      }).join('');
+    }
+    renderSettlement(balance); // sau khi có số dư thì tính luôn gợi ý thanh toán
+  }
+
+  // Hàm dùng thuật toán tham lam (greedy) để tối thiểu hoá số lượt chuyển khoản
+  function minimizeTransactions(balance){
+    // Tạo danh sách các cặp [tên, số dư], loại bỏ người có số dư gần bằng 0
+    let debtors = [];  // danh sách người đang nợ (số dư âm)
+    let creditors = []; // danh sách người được nhận (số dư dương)
+
+    Object.entries(balance).forEach(([name, val]) => {
+      if(val < -1) debtors.push({name, amt: -val}); // amt lưu số tiền dương cần trả
+      else if(val > 1) creditors.push({name, amt: val}); // amt lưu số tiền dương sẽ nhận
+    });
+
+    const transactions = []; // mảng kết quả: các lệnh chuyển khoản đề xuất
+
+    // Lặp cho đến khi không còn ai nợ hoặc không còn ai cần nhận
+    while(debtors.length > 0 && creditors.length > 0){
+      // Sắp xếp giảm dần để luôn ưu tiên xử lý khoản lớn nhất trước (chiến lược tham lam)
+      debtors.sort((a,b) => b.amt - a.amt);
+      creditors.sort((a,b) => b.amt - a.amt);
+
+      const d = debtors[0]; // người nợ nhiều nhất hiện tại
+      const c = creditors[0]; // người cần nhận nhiều nhất hiện tại
+      const amount = Math.min(d.amt, c.amt); // số tiền chuyển = phần nhỏ hơn giữa hai bên
+
+      transactions.push({ from: d.name, to: c.name, amount }); // ghi nhận lệnh chuyển khoản này
+
+      d.amt -= amount; // trừ bớt số nợ của người trả
+      c.amt -= amount; // trừ bớt số cần nhận của người nhận
+
+      if(d.amt < 1) debtors.shift(); // nếu đã trả hết thì loại khỏi danh sách nợ
+      if(c.amt < 1) creditors.shift(); // nếu đã nhận đủ thì loại khỏi danh sách cần nhận
+    }
+    return transactions; // trả về danh sách các lệnh chuyển khoản tối ưu
+  }
+
+  // Hàm vẽ danh sách gợi ý thanh toán (signature element - hiệu ứng dòng chảy)
+  function renderSettlement(balance){
+    const wrap = document.getElementById('settleList');
+    const txns = minimizeTransactions(balance); // tính danh sách giao dịch tối ưu
+    if(txns.length === 0){
+      wrap.innerHTML = '<p class="empty-state">Mọi người đã huề tiền nhau, không cần chuyển khoản!</p>';
+      return;
+    }
+    wrap.innerHTML = txns.map(t => `
+      <div class="flow-item">
+        <div class="flow-track"></div>
+        <b>${escapeHtml(t.from)}</b> <span class="flow-arrow">→</span> <b>${escapeHtml(t.to)}</b>
+        <span style="margin-left:auto;font-family:'Space Grotesk',sans-serif;font-weight:700;">${formatVND(t.amount)}</span>
+      </div>
+    `).join('');
+  }
+
+  /* ==============================================================
+     PHẦN 5: THỐNG KÊ & CẢNH BÁO NGÂN SÁCH
+     ============================================================== */
+  // Hàm tính tổng số tiền mỗi người đã "gánh" trong 7 ngày gần nhất
+  function calcWeeklySpend(){
+    const trip = getCurrentTrip();
+    const spend = {}; // object lưu tổng chi tiêu từng người trong tuần
+    if(!trip) return spend;
+    const now = new Date(); // thời điểm hiện tại
+    const weekAgo = new Date(now.getTime() - 7*24*60*60*1000); // 7 ngày trước
+    trip.members.forEach(m => spend[m] = 0); // khởi tạo 0 cho tất cả
+
+    trip.expenses.forEach(e => {
+      const d = new Date(e.date); // chuyển chuỗi ngày thành đối tượng Date
+      if(d >= weekAgo){ // chỉ tính nếu khoản chi nằm trong 7 ngày gần đây
+        const share = e.amount / e.splitWith.length; // phần mỗi người phải gánh
+        e.splitWith.forEach(p => spend[p] = (spend[p]||0) + share); // cộng dồn vào tổng của từng người
+      }
+    });
+    return spend;
+  }
+
+  // Hàm vẽ biểu đồ thanh (thanh ngang) thể hiện chi tiêu theo tuần + cảnh báo vượt ngân sách
+  function renderStats(){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    trip.budget = parseFloat(document.getElementById('budgetInput').value) || 0; // lấy hạn mức người dùng nhập
+    const spend = calcWeeklySpend(); // tính chi tiêu tuần này
+    const wrap = document.getElementById('statsBars');
+    const alertWrap = document.getElementById('statsAlerts');
+    const names = Object.keys(spend);
+
+    if(names.length === 0){ wrap.innerHTML = '<p class="empty-state">Chưa có dữ liệu.</p>'; alertWrap.innerHTML=''; return; }
+
+    // Tìm mức chi cao nhất để làm mốc 100% cho thanh biểu đồ (nếu chưa đặt ngân sách)
+    const maxVal = Math.max(...Object.values(spend), trip.budget, 1);
+
+    // Tạo danh sách những người bị vượt ngân sách để cảnh báo
+    const overBudget = names.filter(n => trip.budget > 0 && spend[n] > trip.budget);
+    if(overBudget.length > 0){
+      alertWrap.innerHTML = `<div class="alert-banner">⚠️ <span><b>${escapeHtml(overBudget.join(', '))}</b> đã chi vượt hạn mức ${formatVND(trip.budget)}/tuần. Cả nhóm nên cân nhắc giảm chi tiêu hoặc điều chỉnh kế hoạch.</span></div>`;
+    } else {
+      alertWrap.innerHTML = '';
+    }
+
+    // Vẽ từng thanh biểu đồ cho mỗi thành viên
+    wrap.innerHTML = names.map(n => {
+      const pct = Math.min(100, (spend[n] / maxVal) * 100); // phần trăm chiều dài thanh
+      const isOver = trip.budget > 0 && spend[n] > trip.budget; // có vượt ngân sách không
+      return `
+        <div class="stat-bar-wrap">
+          <div class="stat-bar-label"><span>${escapeHtml(n)}</span><span>${formatVND(spend[n])}</span></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill ${isOver?'over':''}" style="width:${pct}%;"></div></div>
+        </div>
+      `;
+    }).join('');
+    saveState(); // lưu lại hạn mức ngân sách vừa cập nhật
+  }
+
+  /* ==============================================================
+     PHẦN 6: CHATBOT TRỢ LÝ AI (gọi Anthropic API)
+     ============================================================== */
+  // Hàm thêm 1 dòng tin nhắn vào khung chat trên giao diện
+  function appendMessage(text, sender){
+    const win = document.getElementById('chatWindow');
+    const div = document.createElement('div'); // tạo thẻ div mới cho tin nhắn
+    div.className = 'msg ' + sender; // gán class để CSS style đúng (bot hoặc user)
+    div.textContent = text; // gán nội dung văn bản (an toàn, tránh lỗi HTML injection)
+    win.appendChild(div); // thêm vào khung chat
+    win.scrollTop = win.scrollHeight; // tự động cuộn xuống tin nhắn mới nhất
+    return div; // trả về để có thể chỉnh sửa sau (dùng cho hiệu ứng "đang gõ")
+  }
+
+  // Hàm tạo đoạn mô tả dữ liệu hiện tại của nhóm, dùng làm ngữ cảnh gửi cho AI
+  function buildContextSummary(){
+    const trip = getCurrentTrip();
+    if(!trip) return '{}';
+    const balance = calculateBalances(); // số dư từng người
+    const weekly = calcWeeklySpend();    // chi tiêu tuần này từng người
+    return JSON.stringify({
+      ten_chuyen_di: trip.name,
+      thanh_vien: trip.members,
+      ngan_sach_tuan: trip.budget,
+      chi_tieu_tuan_nay: weekly,
+      so_du_hien_tai: balance,
+      danh_sach_khoan_chi: trip.expenses.map(e => ({noi_dung:e.desc, so_tien:e.amount, ngay:e.date, nguoi_tra:e.payer}))
+    });
+  }
+
+  // Hàm gửi tin nhắn nhanh khi người dùng bấm vào các gợi ý có sẵn
+  function sendQuickMessage(text){
+    document.getElementById('chatInput').value = text; // điền sẵn nội dung vào ô nhập
+    sendChat(); // gọi hàm gửi tin nhắn
+  }
+
+  // Hàm chính xử lý gửi tin nhắn của người dùng và nhận phản hồi từ AI
+  async function sendChat(){
+    const trip = getCurrentTrip();
+    if(!trip) return;
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text) return; // không gửi nếu ô nhập rỗng
+
+    appendMessage(text, 'user'); // hiển thị tin nhắn của người dùng lên khung chat
+    input.value = ''; // xoá trắng ô nhập
+
+    const typingEl = appendMessage('Trợ lý đang soạn câu trả lời...', 'bot typing'); // hiển thị trạng thái đang xử lý
+
+    // Câu lệnh hệ thống định hướng vai trò và phong cách trả lời của AI
+    const systemPrompt = `Bạn là trợ lý ảo của ứng dụng FairShare, giúp học sinh Việt Nam chia tiền chuyến đi công bằng.
+Nhiệm vụ của bạn:
+1. Trả lời bằng tiếng Việt, thân thiện, ngắn gọn, dễ hiểu với học sinh.
+2. Khi được hỏi về ý tưởng đi chơi: gợi ý địa điểm/hoạt động phù hợp túi tiền học sinh.
+3. Khi được hỏi về chi tiêu: dựa vào dữ liệu JSON được cung cấp (thành viên, ngân sách, chi tiêu tuần này, số dư) để phân tích và đưa ra nhận xét cụ thể, có số liệu.
+4. Nếu phát hiện ai đó chi vượt ngân sách tuần đã đặt, hãy chủ động cảnh báo nhẹ nhàng và gợi ý cách điều chỉnh.
+5. Khi được hỏi cách chia tiền công bằng, hãy giải thích ngắn gọn dựa trên nguyên tắc chia đều hoặc theo mức sử dụng thực tế.
+Dữ liệu hiện tại của nhóm (định dạng JSON): ${buildContextSummary()}`;
+
+    try{
+      // LUÔN gọi qua "/api/chat" - một serverless function tự dựng (xem file
+      // api/chat.js đi kèm) để giữ API key an toàn ở phía server.
+      // Lưu ý quan trọng: chatbot sẽ KHÔNG hoạt động khi mở file này trực
+      // tiếp hoặc xem trong khung xem trước (vì lúc đó không có server nào
+      // đứng ở "/api/chat" để trả lời cả) - chatbot CHỈ hoạt động sau khi
+      // đã deploy lên Vercel (hoặc nơi tương tự) VÀ cấu hình biến môi trường
+      // ANTHROPIC_API_KEY trong phần Settings > Environment Variables.
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system: systemPrompt,       // ngữ cảnh hệ thống + dữ liệu nhóm hiện tại
+          messages: [...trip.chatHistory, { role: "user", content: text }] // gửi kèm lịch sử hội thoại trước đó của chuyến đi này
+        })
+      });
+
+      const data = await response.json(); // parse kết quả trả về dạng JSON
+      if(!response.ok){
+        // Nếu server trung gian báo lỗi cụ thể (ví dụ thiếu API key) thì hiển thị luôn để dễ debug
+        throw new Error(data.error ? (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) : 'Lỗi không xác định từ máy chủ.');
+      }
+      // Ghép toàn bộ các đoạn văn bản trong content lại thành 1 câu trả lời hoàn chỉnh
+      const reply = (data.content || []).map(block => block.text || '').join('\n').trim() || 'Xin lỗi, mình chưa thể trả lời câu này.';
+
+      typingEl.remove(); // xoá dòng "đang soạn câu trả lời"
+      appendMessage(reply, 'bot'); // hiển thị câu trả lời thật của AI
+
+      // Lưu lại lịch sử hội thoại của chuyến đi này để lần hỏi sau AI vẫn nhớ ngữ cảnh
+      trip.chatHistory.push({ role: "user", content: text });
+      trip.chatHistory.push({ role: "assistant", content: reply });
+      saveState(); // lưu lại lịch sử chat
+
+    } catch(err){
+      typingEl.remove(); // xoá trạng thái đang gõ nếu có lỗi xảy ra
+      appendMessage('Có lỗi khi kết nối trợ lý AI: ' + err.message, 'bot'); // hiển thị rõ nội dung lỗi để dễ debug (ví dụ thiếu API key)
+      console.error('Lỗi gọi API:', err); // ghi log lỗi để lập trình viên kiểm tra
+    }
+  }
+
+  /* ==============================================================
+     KHỞI TẠO BAN ĐẦU KHI TẢI TRANG
+     ============================================================== */
+  function init(){
+    // Đặt ngày mặc định cho ô ngày chi = hôm nay, tiện cho người dùng
+    document.getElementById('expDate').value = new Date().toISOString().slice(0,10);
+    // Không tự nạp dữ liệu nữa - phải đăng nhập/đăng ký trước, xem doLogin()/doRegister()/enterApp()
+  }
+
+  init();
+</script>
+
+</body>
+</html>
